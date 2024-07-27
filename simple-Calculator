@@ -1,0 +1,122 @@
+section .text
+    global _start
+
+section .data
+    prompt1 db 'Enter first number: ', 0 
+    prompt2 db 'Enter second number: ', 0
+    prompt3 db 'Enter operation (+, -, *, /): ', 0
+    result_msg db 'The result is: ', 0
+    error_msg db 'Invalid operation!', 0
+
+section .bss
+    num1 resb 10
+    num2 resb 10
+    operation resb 1
+    result resb 10
+
+_start:
+    ; Prompt for the first number
+    mov edx, len prompt1
+    mov ecx, prompt1
+    call print_string
+    call read_number
+    mov [num1], eax
+
+    ; Prompt for the second number
+    mov edx, len prompt2
+    mov ecx, prompt2
+    call print_string
+    call read_number
+    mov [num2], eax
+
+    ; Prompt for the operation
+    mov edx, len prompt3
+    mov ecx, prompt3
+    call print_string
+    call read_operation
+    mov [operation], al
+
+    ; Perform the operation
+    mov eax, [num1]
+    mov ebx, [num2]
+    mov dl, [operation]
+
+    cmp dl, '+'
+    je add
+    cmp dl, '-'
+    je sub
+    cmp dl, '*'
+    je mul
+    cmp dl, '/'
+    je div
+    jmp invalid_op
+
+add:
+    add eax, ebx
+    jmp print_result
+
+sub:
+    sub eax, ebx
+    jmp print_result
+
+mul:
+    mul ebx
+    jmp print_result
+
+div:
+    xor edx, edx
+    div ebx
+    jmp print_result
+
+invalid_op:
+    mov edx, len error_msg
+    mov ecx, error_msg
+    call print_string
+    jmp exit
+
+print_result:
+    mov [result], eax
+    mov edx, len result_msg
+    mov ecx, result_msg
+    call print_string
+    call print_number
+    jmp exit
+
+exit:
+    mov eax, 1
+    int 0x80
+
+print_string:
+    mov eax, 4
+    mov ebx, 1
+    int 0x80
+    ret
+
+read_number:
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, num1
+    mov edx, 10
+    int 0x80
+    sub byte [ecx + eax - 1], 0x30
+    ret
+
+read_operation:
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, operation
+    mov edx, 1
+    int 0x80
+    ret
+
+print_number:
+    mov eax, [result]
+    add eax, 0x30
+    mov edx, 1
+    mov ecx, result
+    mov ebx, 1
+    mov eax, 4
+    int 0x80
+    ret
+
+len equ $-prompt1
